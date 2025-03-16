@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - JourneyAI</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inline CSS -->
+    <style>
+        /* Custom CSS for help page */
+        .faq-item {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 1.5rem;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .faq-question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #5271ff; /* Primary color */
+            margin-bottom: 0.75rem;
+        }
+
+        .faq-answer {
+            font-size: 0.95rem;
+            color: #6c757d; /* Gray color */
+        }
+
+        .contact-info {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-info h3 {
+            color: #5271ff;
+            margin-bottom: 1rem;
+        }
+
+        .contact-info p {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+                <div class="logo-icon d-flex align-items-center justify-content-center rounded-circle me-2" style="background-color: #5271ff;">
+                    <i class="fas fa-route text-white"></i>
+                </div>
+                <span class="fs-4 fw-bold">Journey<span class="text-primary" style="color: #5271ff;">AI</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'destinations' %}">Destinations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'guides' %}">Guides</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'testimonials' %}">Testimonials</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'help' %}">Help</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <h1 class="display-4 mb-4">Help Center</h1>
+        <p class="lead mb-5">Find answers to common questions or contact us for further assistance.</p>
+
+        <!-- FAQs Section -->
+        <div class="faq-section">
+            <h2 class="h4 mb-4">Frequently Asked Questions</h2>
+            {% for faq in faqs %}
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i class="fas fa-question-circle text-primary me-2"></i>{{ faq.question }}
+                </div>
+                <div class="faq-answer">
+                    {{ faq.answer }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Contact Information -->
+        <div class="contact-info">
+            <h3 class="h4">Contact Us</h3>
+            <p><i class="fas fa-envelope me-2"></i>Email: nandankhawale@gmail.com</p>
+            <p><i class="fas fa-phone me-2"></i>Phone: +91-1234567890</p>
+            <p><i class="fas fa-map-marker-alt me-2"></i>Address: 123 Travel Street, Mumbai, India</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
