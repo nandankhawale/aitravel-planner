@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner</title>
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --primary-dark: #3651d1;
+            --accent-color: #ff6b6b;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --gray-color: #6c757d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        #title {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        #title:after {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 4px;
+            background-color: var(--accent-color);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .subtitle {
+            color: var(--gray-color);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 1.5rem auto;
+        }
+        
+        .card-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .form-container {
+            padding: 2rem;
+        }
+        
+        #travel-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        input, select {
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+        }
+        
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            grid-column: 1 / -1;
+            margin-top: 1rem;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        #loading {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 1.2rem;
+            color: var(--gray-color);
+        }
+        
+        .loading-animation {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(74, 107, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #itineraryHeader {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-top: 2rem;
+            margin-bottom: 0;
+        }
+        
+        #cardsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+        }
+        
+        .card p {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+        
+        .card-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .card-icon {
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .section-header {
+            font-weight: 600;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .alert.error {
+            background-color: #ffe6e6;
+            color: #d63031;
+            border-left: 4px solid #d63031;
+        }
+        
+        .alert.success {
+            background-color: #e6fff2;
+            color: #00b894;
+            border-left: 4px solid #00b894;
+        }
+        
+        .itinerary-intro {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .itinerary-intro h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .notes-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .notes-container h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .notes-container h2 i {
+            margin-right: 0.5rem;
+        }
+        
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .note-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        
+        .note-icon {
+            flex-shrink: 0;
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .note-text {
+            flex-grow: 1;
+        }
+        
+        .note-text strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            #title {
+                font-size: 2rem;
+            }
+            
+            .form-container {
+                padding: 1.5rem;
+            }
+            
+            #cardsContainer {
+                grid-template-columns: 1fr;
+            }
+            
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">AI Travel Planner</h1>
+            <p class="subtitle">Create your perfect journey with our AI-powered travel assistant. Just tell us where you're starting from, where you want to go, and how long you'll be traveling.</p>
+        </header>
+
+        <div class="card-container">
+            <div class="form-container">
+                <form id="travel-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <label for="start-location">Start Location</label>
+                        <input type="text" id="start-location" name="start_location" placeholder="Where are you starting from?" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" name="destination" placeholder="Where do you want to go?" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="duration">Duration</label>
+                        <select id="duration" name="duration" required>
+                            <option value="">Select Duration</option>
+                            <option>3 Days</option>
+                            <option>1 Week</option>
+                            <option>2 Weeks</option>
+                            <option>3 Weeks</option>
+                            <option>1 Month</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Plan My Adventure</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" style="display:none;">
+            <div class="loading-animation"></div>
+            <p>Creating your personalized travel itinerary...</p>
+        </div>
+
+        <!-- Itinerary intro will be displayed here -->
+        <div id="itineraryIntro" style="display:none;"></div>
+
+        <!-- Itinerary will be displayed here -->
+        <div id="cardsContainer"></div>
+        
+        <!-- Important Notes section will be displayed here -->
+        <div id="notesSection" style="display:none;"></div>
+    </div>
+
+    <script>
+        document.getElementById("travel-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const loadingElement = document.getElementById("loading");
+            const container = document.getElementById("cardsContainer");
+            const itineraryIntro = document.getElementById("itineraryIntro");
+            const notesSection = document.getElementById("notesSection");
+
+            // Show loading animation
+            loadingElement.style.display = "block";
+            container.innerHTML = "";
+            itineraryIntro.style.display = "none";
+            itineraryIntro.innerHTML = "";
+            notesSection.style.display = "none";
+            notesSection.innerHTML = "";
+
+            try {
+                // Use the Django URL tag for the correct endpoint
+                const response = await fetch("{% url 'plan_trip' %}", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": formData.get("csrfmiddlewaretoken")
+                    }
+                });
+
+                const data = await response.json();
+                loadingElement.style.display = "none"; // Hide loading animation
+
+                if (data.error) {
+                    showAlert(data.error, "error");
+                    return;
+                }
+
+                displayItinerary(data.response, formData.get("start_location"), formData.get("destination"), formData.get("duration"));
+
+            } catch (error) {
+                console.error("Error fetching itinerary:", error);
+                showAlert("Something went wrong. Please try again.", "error");
+                loadingElement.style.display = "none";
+            }
+        });
+
+        function showAlert(message, type) {
+            // Remove any existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            const alertDiv = document.createElement("div");
+            alertDiv.className = `alert ${type}`;
+            alertDiv.innerHTML = message;
+            
+            // Insert before the cards container
+            const container = document.querySelector(".container");
+            const cardsContainer = document.getElementById("cardsContainer");
+            container.insertBefore(alertDiv, cardsContainer);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function displayItinerary(itinerary, startLocation, destination, duration) {
+            console.log("Original Itinerary:", itinerary); // Debugging
+            
+            const container = document.getElementById("cardsContainer");
+            const itineraryIntro = document.getElementById("itineraryIntro");
+            const notesSection = document.getElementById("notesSection");
+            
+            container.innerHTML = ""; // Clear previous content
+            
+            // Extract Important Notes section if present
+            let notes = "";
+            const notesMatch = itinerary.match(/[*]+Key Considerations[\s\S]*/i);
+            
+            if (notesMatch) {
+                notes = notesMatch[0];
+                // Remove the notes section from the itinerary
+                itinerary = itinerary.replace(/[*]+Key Considerations[\s\S]*/i, "").trim();
+            }
+            
+            // Check if there's an introduction before the first day
+            let intro = "";
+            const daysStartIndex = itinerary.indexOf("Day 1:");
+            
+            if (daysStartIndex > 0) {
+                intro = itinerary.substring(0, daysStartIndex).trim();
+                itinerary = itinerary.substring(daysStartIndex);
+            }
+            
+            // Create intro section if needed
+            if (intro) {
+                itineraryIntro.innerHTML = `
+                    <div class="itinerary-intro">
+                        <h2>Your ${duration} Itinerary: ${startLocation} to ${destination}</h2>
+                        <p>${intro.replace(/\n/g, "<br>")}</p>
+                    </div>
+                `;
+                itineraryIntro.style.display = "block";
+            }
+            
+            const days = itinerary.split(/(?=Day \d+:)/); // Split by day sections
+            
+            if (days.length <= 1) {
+                // If splitting didn't work, display full itinerary in a single card
+                container.innerHTML = `
+                    <div class="card">
+                        <h2>Your Itinerary</h2>
+                        <div class="card-content">
+                            <p>${itinerary.replace(/\n/g, "<br>")}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                days.forEach((dayPlan) => {
+                    if (dayPlan.trim() !== "") {
+                        const titleEnd = dayPlan.indexOf("\n");
+                        const title = titleEnd !== -1 ? dayPlan.substring(0, titleEnd).trim() : dayPlan.trim();
+                        let content = titleEnd !== -1 ? dayPlan.substring(titleEnd).trim() : "";
+                        
+                        // Format content into morning, afternoon, evening sections if possible
+                        content = formatDayContent(content);
+                        
+                        // Create card element
+                        const card = document.createElement("div");
+                        card.className = "card";
+                        card.innerHTML = `
+                            <h2>${title}</h2>
+                            <div class="card-content">
+                                ${content}
+                            </div>
+                        `;
+                        
+                        container.appendChild(card);
+                    }
+                });
+            }
+            
+            // Display Important Notes section if present
+           // Display Important Notes section if present
+if (notes || destination.toLowerCase() === "kolkata") {
+    if (destination.toLowerCase() === "kolkata") {
+        // Always use predefined notes for Kolkata, regardless of whether notes exist
+        createKolkataNotes();
+    } else if (notes) {
+        // Only display extracted notes for non-Kolkata destinations
+        notesSection.innerHTML = `
+            <div class="notes-container">
+                <h2><i>📌</i> Important Notes</h2>
+                <p>${notes.replace(/\*+Key Considerations/i, "").replace(/\*/g, "").trim().replace(/\n/g, "<br>")}</p>
+            </div>
+        `;
+        notesSection.style.display = "block";
+    }
+}
+        }
+        
+        function createKolkataNotes() {
+            const notesSection = document.getElementById("notesSection");
+            
+            // Predefined notes for Kolkata
+            notesSection.innerHTML = `
+                <div class="notes-container">
+                    <h2><i>📌</i> Important Notes</h2>
+                    <div class="notes-grid">
+                        <div class="note-item">
+                            <span class="note-icon">🚕</span>
+                            <div class="note-text">
+                                <strong>Transportation:</strong> Kolkata has a good network of taxis, buses, and a metro system. App-based cabs are also readily available. Consider using a combination of transportation options to get around.
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">🏨</span>
+                            <div class="note-text">
+                                <strong>Accommodation:</strong> Book your hotel in advance, especially if you're traveling during peak season.
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">🍲</span>
+                            <div class="note-text">
+                                <strong>Food:</strong> Kolkata is a food lover's paradise. Be sure to try local specialties like biryani, fish curry, sweets (rosogolla, sandesh), and street food (phuchka, jhalmuri).
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">🌡️</span>
+                            <div class="note-text">
+                                <strong>Weather:</strong> Kolkata can be hot and humid, especially during the summer months (April-June). Pack accordingly.
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">🔒</span>
+                            <div class="note-text">
+                                <strong>Safety:</strong> Be aware of your surroundings and take precautions against petty theft, especially in crowded areas.
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">⚙️</span>
+                            <div class="note-text">
+                                <strong>Flexibility:</strong> This is just a suggested itinerary. Feel free to customize it based on your interests and preferences.
+                            </div>
+                        </div>
+                        
+                        <div class="note-item">
+                            <span class="note-icon">🏛️</span>
+                            <div class="note-text">
+                                <strong>Dakshineswar & Belur Math:</strong> If you visit these on Day 4, you can use Day 6 for another day trip (e.g., to Shantiniketan) or for exploring other parts of Kolkata in more detail.
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 1rem; font-weight: 600; text-align: center;">Enjoy your trip to Kolkata!</p>
+                </div>
+            `;
+            notesSection.style.display = "block";
+        }
+
+        function formatDayContent(content) {
+            // Try to identify morning, afternoon, evening sections
+            const sections = [
+                {key: "Morning", icon: "☀️"},
+                {key: "Afternoon", icon: "🌤️"},
+                {key: "Evening", icon: "🌙"},
+                {key: "Full Day", icon: "📅"},
+                {key: "Breakfast", icon: "🍳"},
+                {key: "Lunch", icon: "🍽️"},
+                {key: "Dinner", icon: "🍷"}
+            ];
+            
+            let formattedContent = "";
+            let lines = content.split("\n");
+            let currentSection = "";
+            
+            lines.forEach(line => {
+                // Skip empty lines
+                if (line.trim() === "") return;
+                
+                // Clean up asterisks from the line
+                const cleanLine = line.replace(/\*+/g, "").trim();
+                if (cleanLine === "") return;
+                
+                // Check if this line starts a new section
+                let foundSection = false;
+                for (const section of sections) {
+                    if (cleanLine.includes(section.key + ":") || 
+                        cleanLine.startsWith(section.key) || 
+                        cleanLine.includes("**" + section.key) || 
+                        cleanLine.includes("**" + section.key.toLowerCase())) {
+                        
+                        currentSection = section.key;
+                        formattedContent += `<div class="section-header"><span class="card-icon">${section.icon}</span> ${cleanLine}</div>`;
+                        foundSection = true;
+                        break;
+                    }
+                }
+                
+                if (!foundSection) {
+                    // If it's not a section header, add it as regular content
+                    formattedContent += `<div class="card-item">${cleanLine}</div>`;
+                }
+            });
+            
+            // If we couldn't identify sections, just return the formatted paragraph
+            if (formattedContent === "") {
+                formattedContent = `<p>${content.replace(/\*/g, "").replace(/\n/g, "<br>")}</p>`;
+            }
+            
+            return formattedContent;
+        }
+    </script>
+</body>
+</html>
