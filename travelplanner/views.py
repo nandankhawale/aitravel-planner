@@ -37,20 +37,17 @@ def plan_trip(request):
 
     try:
         prompt = (
-            f"You are a professional travel planner and storyteller. "
-            f"Create a detailed {duration}-day travel itinerary for a trip starting in {start_location} and going to {destination}.\n\n"
-            f"**Part 1 — Travel Route (2–3 sentences):** Explain the best route from {start_location} to {destination} "
-            f"(air/train/bus) including travel duration and notable scenery.\n\n"
-            f"**Part 2 — Daily Plans:** For each day:\n"
-            f"• Write a *minimum of 150 words* per day.\n"
-            f"• Clearly label sections as **Morning**, **Afternoon**, and **Evening**.\n"
-            f"• Include transportation, attractions, cultural notes, food recommendations, and approximate times.\n"
-            f"• Make the descriptions vivid and immersive, like a travel blog story.\n"
-            f"• Ensure smooth narrative flow between Morning → Afternoon → Evening.\n\n"
-            f"**Part 3 — Important Travel Notes:** End with a clearly marked section 'Important Travel Notes' "
-            f"containing 4–6 bullet points on safety, local customs, packing suggestions, and expected weather.\n\n"
-            f"Keep the tone engaging, descriptive, and traveler-friendly."
-        )
+    f"You are a professional travel planner and storyteller. "
+    f"Create a concise {duration}-day travel itinerary for a trip from {start_location} to {destination}.\n\n"
+    f"**Part 1 — Travel Route (1–2 sentences):** Briefly describe the best route (air/train/bus) including travel time.\n\n"
+    f"**Part 2 — Daily Plans:** For each day:\n"
+    f"• Write about 70-100 words per day.\n"
+    f"• Label sections as **Morning**, **Afternoon**, and **Evening**.\n"
+    f"• Mention main attractions and food recommendations briefly.\n\n"
+    f"**Part 3 — Travel Notes:** Include 3-4 quick bullet points on safety, customs, and packing tips.\n\n"
+    f"Keep the tone clear, friendly, and to the point."
+)
+
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -59,7 +56,7 @@ def plan_trip(request):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=1000
         )
 
         full_response = response.choices[0].message.content.strip()
