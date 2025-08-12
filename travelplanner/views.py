@@ -1,10 +1,18 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from gradio_client import Client
+import os
+
 
 def index(request):
     """Renders the main AI Travel Planner UI."""
     return render(request, "planner/index.html")
+
+from openai import OpenAI
+from django.http import JsonResponse
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+client = OpenAI(api_key="OPENAI_API_KEY")
 
 def plan_trip(request):
     """Handles user input and returns structured itinerary data."""
@@ -18,26 +26,46 @@ def plan_trip(request):
             return JsonResponse({"error": "All fields are required!"}, status=400)
 
         try:
-            client = Client("wolf1997/travel_agent")
-            full_response = client.predict(
-                message=f"Create a {duration}-day itinerary from {start_location} to {destination}. "
-                        f"Include sightseeing, transportation details, and important travel notes.",
-                api_name="/chat"
+            prompt = (
+                f"You are a professional travel planner and storyteller. "
+                f"Create a detailed {duration}-day travel itinerary for a trip starting in {start_location} and going to {destination}.\n\n"
+                f"**Part 1 — Travel Route (2–3 sentences):** Explain the best route from {start_location} to {destination} "
+                f"(air/train/bus) including travel duration and notable scenery.\n\n"
+                f"**Part 2 — Daily Plans:** For each day:\n"
+                f"• Write a *minimum of 150 words* per day.\n"
+                f"• Clearly label sections as **Morning**, **Afternoon**, and **Evening**.\n"
+                f"• Include transportation, attractions, cultural notes, food recommendations, and approximate times.\n"
+                f"• Make the descriptions vivid and immersive, like a travel blog story.\n"
+                f"• Ensure smooth narrative flow between Morning → Afternoon → Evening.\n\n"
+                f"**Part 3 — Important Travel Notes:** End with a clearly marked section 'Important Travel Notes' "
+                f"containing 4–6 bullet points on safety, local customs, packing suggestions, and expected weather.\n\n"
+                f"Keep the tone engaging, descriptive, and traveler-friendly."
             )
 
-            # Improved splitting and cleaning logic
-            notes_header = "Important Travel Notes:"
-            if notes_header in full_response:
-                parts = full_response.split(notes_header, 1)
-                itinerary = parts[0].strip()
-                
-                # Clean up notes
-                notes = parts[1].strip()
-                notes = notes.replace("*", "")  # Remove all asterisks
-                notes = notes.replace("**", "")  # Remove double asterisks
-                notes = notes_header + "\n" + notes  # Reattach header
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are an expert travel itinerary creator who writes vivid, detailed, and structured trip plans."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+
+            full_response = response.choices[0].message.content.strip()
+
+            # Normalize header detection
+            headers = ["Important Travel Notes", "Important travel notes", "Travel Notes", "Notes"]
+            notes_index = None
+            for h in headers:
+                if h in full_response:
+                    notes_index = full_response.index(h)
+                    break
+
+            if notes_index is not None:
+                itinerary = full_response[:notes_index].strip()
+                notes = full_response[notes_index:].strip()
             else:
-                itinerary = full_response.strip()
+                itinerary = full_response
                 notes = None
 
             return JsonResponse({
@@ -49,6 +77,7 @@ def plan_trip(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 def destinations(request):
     """Renders the popular destinations page with images from the internet."""
