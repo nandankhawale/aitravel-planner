@@ -58,7 +58,8 @@ def plan_trip(request):
                 {"role": "system", "content": "You are an expert travel itinerary creator who writes vivid, detailed, and structured trip plans."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7
+            temperature=0.7,
+            max_tokens=600
         )
 
         full_response = response.choices[0].message.content.strip()
