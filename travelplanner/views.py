@@ -1,84 +1,90 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from gradio_client import Client
+from openai import OpenAI
 import os
+from dotenv import load_dotenv
+
+# Load local .env only if running locally (Render uses environment variables)
+if os.environ.get("RENDER") is None:  
+    load_dotenv()
+
+# Get API key from environment
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY not found in environment variables.")
+
+# Initialize OpenAI client
+client = OpenAI(api_key=api_key)
 
 
 def index(request):
     """Renders the main AI Travel Planner UI."""
     return render(request, "planner/index.html")
 
-from openai import OpenAI
-from django.http import JsonResponse
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-client = OpenAI(api_key="OPENAI_API_KEY")
 
 def plan_trip(request):
     """Handles user input and returns structured itinerary data."""
-    if request.method == "POST":
-        start_location = request.POST.get("start_location", "").strip()
-        destination = request.POST.get("destination", "").strip()
-        duration = request.POST.get("duration", "").strip()
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
-        # Validate inputs
-        if not all([start_location, destination, duration]):
-            return JsonResponse({"error": "All fields are required!"}, status=400)
+    start_location = request.POST.get("start_location", "").strip()
+    destination = request.POST.get("destination", "").strip()
+    duration = request.POST.get("duration", "").strip()
 
-        try:
-            prompt = (
-                f"You are a professional travel planner and storyteller. "
-                f"Create a detailed {duration}-day travel itinerary for a trip starting in {start_location} and going to {destination}.\n\n"
-                f"**Part 1 — Travel Route (2–3 sentences):** Explain the best route from {start_location} to {destination} "
-                f"(air/train/bus) including travel duration and notable scenery.\n\n"
-                f"**Part 2 — Daily Plans:** For each day:\n"
-                f"• Write a *minimum of 150 words* per day.\n"
-                f"• Clearly label sections as **Morning**, **Afternoon**, and **Evening**.\n"
-                f"• Include transportation, attractions, cultural notes, food recommendations, and approximate times.\n"
-                f"• Make the descriptions vivid and immersive, like a travel blog story.\n"
-                f"• Ensure smooth narrative flow between Morning → Afternoon → Evening.\n\n"
-                f"**Part 3 — Important Travel Notes:** End with a clearly marked section 'Important Travel Notes' "
-                f"containing 4–6 bullet points on safety, local customs, packing suggestions, and expected weather.\n\n"
-                f"Keep the tone engaging, descriptive, and traveler-friendly."
-            )
+    # Validate inputs
+    if not all([start_location, destination, duration]):
+        return JsonResponse({"error": "All fields are required!"}, status=400)
 
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are an expert travel itinerary creator who writes vivid, detailed, and structured trip plans."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7
-            )
+    try:
+        prompt = (
+            f"You are a professional travel planner and storyteller. "
+            f"Create a detailed {duration}-day travel itinerary for a trip starting in {start_location} and going to {destination}.\n\n"
+            f"**Part 1 — Travel Route (2–3 sentences):** Explain the best route from {start_location} to {destination} "
+            f"(air/train/bus) including travel duration and notable scenery.\n\n"
+            f"**Part 2 — Daily Plans:** For each day:\n"
+            f"• Write a *minimum of 150 words* per day.\n"
+            f"• Clearly label sections as **Morning**, **Afternoon**, and **Evening**.\n"
+            f"• Include transportation, attractions, cultural notes, food recommendations, and approximate times.\n"
+            f"• Make the descriptions vivid and immersive, like a travel blog story.\n"
+            f"• Ensure smooth narrative flow between Morning → Afternoon → Evening.\n\n"
+            f"**Part 3 — Important Travel Notes:** End with a clearly marked section 'Important Travel Notes' "
+            f"containing 4–6 bullet points on safety, local customs, packing suggestions, and expected weather.\n\n"
+            f"Keep the tone engaging, descriptive, and traveler-friendly."
+        )
 
-            full_response = response.choices[0].message.content.strip()
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert travel itinerary creator who writes vivid, detailed, and structured trip plans."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
 
-            # Normalize header detection
-            headers = ["Important Travel Notes", "Important travel notes", "Travel Notes", "Notes"]
-            notes_index = None
-            for h in headers:
-                if h in full_response:
-                    notes_index = full_response.index(h)
-                    break
+        full_response = response.choices[0].message.content.strip()
 
-            if notes_index is not None:
-                itinerary = full_response[:notes_index].strip()
-                notes = full_response[notes_index:].strip()
-            else:
-                itinerary = full_response
-                notes = None
+        # Try to split notes from main itinerary
+        headers = ["Important Travel Notes", "Important travel notes", "Travel Notes", "Notes"]
+        notes_index = None
+        for h in headers:
+            if h in full_response:
+                notes_index = full_response.index(h)
+                break
 
-            return JsonResponse({
-                "response": itinerary,
-                "notes": notes
-            })
+        if notes_index is not None:
+            itinerary = full_response[:notes_index].strip()
+            notes = full_response[notes_index:].strip()
+        else:
+            itinerary = full_response
+            notes = None
 
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({
+            "response": itinerary,
+            "notes": notes
+        })
 
-    return JsonResponse({"error": "Invalid request method"}, status=405)
-
-
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 def destinations(request):
     """Renders the popular destinations page with images from the internet."""
     popular_destinations = [
