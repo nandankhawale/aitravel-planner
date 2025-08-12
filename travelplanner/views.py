@@ -59,7 +59,7 @@ def plan_trip(request):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=600
+            max_tokens=2000
         )
 
         full_response = response.choices[0].message.content.strip()
